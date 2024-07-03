@@ -4,43 +4,43 @@ on:
   workflow_dispatch:
     inputs:
       MANIFEST_URL:
-        description: 'MANIFEST_URL (if want to use SSH keys, use git@github.com:XXXXX)'
+        description: 'URL do manifest'
         required: true
         default: 'https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp'
       MANIFEST_BRANCH:
-        description: 'MANIFEST_BRANCH'
+        description: 'Branch do manifest'
         required: true
         default: 'twrp-12.1'
       DEVICE_TREE_URL:
-        description: 'DEVICE_TREE_URL'
+        description: 'URL do device tree'
         required: true
         default: 'https://github.com/Matheus-TestUser1/android_device_samsung_a135m'
       DEVICE_TREE_BRANCH:
-        description: 'DEVICE_TREE_BRANCH'
+        description: 'Branch do device tree'
         required: true
         default: 'twrp-12.1'
       DEVICE_PATH:
-        description: 'DEVICE_PATH'
+        description: 'Caminho do device tree'
         required: true
         default: 'device/samsung/a13'
       COMMON_TREE_URL:
-        description: 'COMMON_TREE_URL (if no common tree, leave blank)'
+        description: 'URL do common tree (se não houver, deixe em branco)'
         required: false
       COMMON_PATH:
-        description: 'COMMON_PATH (if no common tree, leave blank)'
+        description: 'Caminho do common tree (se não houver, deixe em branco)'
         required: false
       DEVICE_NAME:
-        description: 'DEVICE_NAME'
+        description: 'Nome do dispositivo'
         required: true
         default: 'a13'
       MAKEFILE_NAME:
-        description: 'MAKEFILE_NAME'
+        description: 'Nome do makefile'
         required: true
         default: 'twrp_a13'
       BUILD_TARGET:
-        description: 'BUILD_TARGET'
+        description: 'Target de build'
         required: true
-        default: 'recovery'
+        default: 'recoveryimage'
 
 jobs:
   build:
@@ -61,12 +61,10 @@ jobs:
         echo "Makefile Name: ${{ github.event.inputs.MAKEFILE_NAME }}"
         echo "Build Target: ${{ github.event.inputs.BUILD_TARGET }}.img"
         echo "::endgroup::"
- 
-    # You might want to Checkout your repo first, but not mandatory
+
     - name: Check Out
       uses: actions/checkout@v3
 
-    # Cleanup The Actions Workspace Using Custom Composite Run Actions
     - name: Cleanup
       uses: rokibhasansagar/slimhub_actions@main
 
@@ -88,8 +86,8 @@ jobs:
           startsWith(github.event.inputs.COMMON_TREE_URL, 'git@github.com') }}
       uses: webfactory/ssh-agent@v0.5.4
       with:
-          ssh-private-key: |
-            ${{ secrets.SSH_PRIVATE_KEY }}
+        ssh-private-key: |
+          ${{ secrets.SSH_PRIVATE_KEY }}
 
     - name: Install repo
       run: |
@@ -107,39 +105,29 @@ jobs:
         git config --global user.email "b170420nc@gmail.com"
         repo init --depth=1 -u ${{ github.event.inputs.MANIFEST_URL }} -b ${{ github.event.inputs.MANIFEST_BRANCH }}
       id: pwd
-          
+
+    - name: Create local_manifests directory
+      run: mkdir -p .repo/local_manifests
+      working-directory: ${{ steps.pwd.outputs.workspace-folder }}
+      
+    - name: Add device tree to local_manifests
+      run: |
+        echo '<?xml version="1.0" encoding="UTF-8"?>' > .repo/local_manifests/device.xml
+        echo '<manifest>' >> .repo/local_manifests/device.xml
+        echo '  <project name="Matheus-TestUser1/android_device_samsung_a135m" path="device/samsung/a13" remote="github" revision="twrp-12.1"/>' >> .repo/local_manifests/device.xml
+        echo '</manifest>' >> .repo/local_manifests/device.xml
+      working-directory: ${{ steps.pwd.outputs.workspace-folder }}
+
     - name: Repo Sync
       run: |
         repo sync -j$(nproc --all) --force-sync
       working-directory: workspace
-      
-    - name: Clone device tree
-      run: |
-        git clone ${{ github.event.inputs.DEVICE_TREE_URL }} -b ${{ github.event.inputs.DEVICE_TREE_BRANCH }} ./${{ github.event.inputs.DEVICE_PATH }}
-      working-directory: ${{ steps.pwd.outputs.workspace-folder }}
 
     - name: Clone common tree
-      if: |
-        github.event.inputs.COMMON_TREE_URL != null
-        && github.event.inputs.COMMON_PATH != null
+      if: ${{ github.event.inputs.COMMON_TREE_URL != '' && github.event.inputs.COMMON_PATH != '' }}
       run: |
         git clone ${{ github.event.inputs.COMMON_TREE_URL }} -b ${{ github.event.inputs.DEVICE_TREE_BRANCH }} ./${{ github.event.inputs.COMMON_PATH }}
       working-directory: ${{ steps.pwd.outputs.workspace-folder }}
-
-    - name: Check Build Tree
-      uses: haya14busa/action-cond@v1
-      id: buildtree
-      with:
-        cond: ${{ github.event.inputs.MANIFEST_BRANCH == 'twrp-11' || github.event.inputs.MANIFEST_BRANCH == 'twrp-12.1' }}
-        if_true: twrp
-        if_false: omni
-
-    - name: Sync Device Dependencies
-      run: |
-        bash ${GITHUB_WORKSPACE}/scripts/convert.sh ${{ github.event.inputs.DEVICE_PATH }}/${{ steps.buildtree.outputs.value }}.dependencies
-        repo sync -j$(nproc --all)
-      working-directory: ${{ steps.pwd.outputs.workspace-folder }}
-      continue-on-error: true
 
     - name: Set Swap Space
       uses: pierotofy/set-swap-space@master
@@ -150,7 +138,7 @@ jobs:
       run: |
         source build/envsetup.sh
         export ALLOW_MISSING_DEPENDENCIES=true
-        lunch ${{ github.event.inputs.MAKEFILE_NAME }}-eng && mka clean && mka ${{ github.event.inputs.BUILD_TARGET }}image -j$(nproc --all)
+        lunch ${{ github.event.inputs.MAKEFILE_NAME }}-eng && make clean && mka -j$(nproc --all) ${{ github.event.inputs.BUILD_TARGET }}
       working-directory: ${{ steps.pwd.outputs.workspace-folder }}
 
     - name: Upload to Release
