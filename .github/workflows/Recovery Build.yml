@@ -23,6 +23,12 @@ on:
         description: 'Caminho do device tree'
         required: true
         default: 'device/samsung/a13'
+      COMMON_TREE_URL:
+        description: 'URL do common tree (se não houver, deixe em branco)'
+        required: false
+      COMMON_PATH:
+        description: 'Caminho do common tree (se não houver, deixe em branco)'
+        required: false
       DEVICE_NAME:
         description: 'Nome do dispositivo'
         required: true
@@ -31,6 +37,10 @@ on:
         description: 'Nome do makefile'
         required: true
         default: 'twrp_a13'
+      BUILD_TARGET:
+        description: 'Target de build'
+        required: true
+        default: 'recoveryimage'
 
 jobs:
   build:
@@ -49,8 +59,8 @@ jobs:
         echo "Device Path: ${{ github.event.inputs.DEVICE_PATH }}"
         echo "Device Name: ${{ github.event.inputs.DEVICE_NAME }}"
         echo "Makefile Name: ${{ github.event.inputs.MAKEFILE_NAME }}"
+        echo "Build Target: ${{ github.event.inputs.BUILD_TARGET }}.img"
         echo "::endgroup::"
-
     - name: Check Out
       uses: actions/checkout@v3
 
@@ -61,8 +71,7 @@ jobs:
       run: |
         sudo apt update
         sudo apt -y upgrade
-        sudo apt -y install gperf gcc-multilib gcc-10-multilib g++-multilib g++-10-multilib libc6-dev lib32ncurses5-dev x11proto-core-dev libx11-dev tree lib32z-dev libgl1-mesa-dev libxml2-utils xsltproc bc ccache lib32readline-dev lib32z1-dev liblz4-tool libncurses5-dev libsdl1.2-dev libwxgtk3.0-gtk3-dev libxml2 lzop pngcrush schedtool squashfs-tools imagemagick libbz2-dev lzma ncftp qemu-user-static libstdc++-10-dev libncurses5 python3
-
+        sudo apt -y install gperf gcc-multilib gcc-10-multilib g++-multilib g++-10-multilib libc6-dev lib32ncurses5-dev x11proto-core-dev libx11-dev tree lib32z-dev libgl1-mesa-dev libxml2-utils xsltproc bc ccache lib32readline-dev lib32z1-dev liblz4-tool libncurses5-dev libsdl1.2-dev libwxgtk3.0-gtk3-dev libxml2 lzop pngcrush schedtool squashfs-tools imagemagick libbz2-dev lzma ncftp qemu-user-static libstdc++-10-dev libncurses5 e2fsprogs python3
     - name: Install OpenJDK
       uses: actions/setup-java@v3
       with:
@@ -71,19 +80,26 @@ jobs:
 
     - name: Setup SSH Keys
       if: ${{ startsWith(github.event.inputs.MANIFEST_URL, 'git@github.com') || 
-          startsWith(github.event.inputs.DEVICE_TREE_URL, 'git@github.com') }}
+          startsWith(github.event.inputs.DEVICE_TREE_URL, 'git@github.com') ||
+          startsWith(github.event.inputs.COMMON_TREE_URL, 'git@github.com') }}
       uses: webfactory/ssh-agent@v0.5.4
       with:
         ssh-private-key: |
           ${{ secrets.SSH_PRIVATE_KEY }}
-
     - name: Install repo
       run: |
         mkdir ~/bin
         curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
         chmod a+x ~/bin/repo
         sudo ln -sf ~/bin/repo /usr/bin/repo
-      
+    - name: Clone and setup OrangeFox scripts
+      run: |
+        cd ~
+        sudo apt install git aria2 -y
+        git clone https://gitlab.com/OrangeFox/misc/scripts
+        cd scripts
+        sudo bash setup/android_build_env.sh
+        cd ~
     - name: Initialize repo
       run: |
         mkdir workspace
@@ -111,6 +127,12 @@ jobs:
         repo sync -j$(nproc --all) --force-sync
       working-directory: workspace
 
+    - name: Clone common tree
+      if: ${{ github.event.inputs.COMMON_TREE_URL != '' && github.event.inputs.COMMON_PATH != '' }}
+      run: |
+        git clone ${{ github.event.inputs.COMMON_TREE_URL }} -b ${{ github.event.inputs.DEVICE_TREE_BRANCH }} ./${{ github.event.inputs.COMMON_PATH }}
+      working-directory: ${{ steps.pwd.outputs.workspace-folder }}
+
     - name: Set Swap Space
       uses: pierotofy/set-swap-space@master
       with:
@@ -120,22 +142,21 @@ jobs:
       run: |
         source build/envsetup.sh
         export ALLOW_MISSING_DEPENDENCIES=true
-        lunch ${{ github.event.inputs.MAKEFILE_NAME }}-eng && make clean && mka -j$(nproc --all) recoveryimage
+        lunch ${{ github.event.inputs.MAKEFILE_NAME }}-eng && make clean && mka -j$(nproc --all) ${{ github.event.inputs.BUILD_TARGET }}
       working-directory: ${{ steps.pwd.outputs.workspace-folder }}
 
-    - name: Find recovery.img
-      id: find-recovery
-      run: |
-        find workspace -name "recovery.img"
-      continue-on-error: true
-
-    - name: Upload Recovery to Release
-      if: steps.find-recovery.outputs.stdout != ''
-      uses: actions/upload-release-asset@v1
+    - name: Upload to Release
+      uses: softprops/action-gh-release@v1
       with:
-        upload_url: ${{ github.event.repository.releases_url }}
-        asset_path: ${{ steps.find-recovery.outputs.stdout }}
-        asset_name: recovery-${{ github.sha }}.img
-        asset_content_type: application/octet-stream
+        files: | 
+          workspace/out/target/product/${{ github.event.inputs.DEVICE_NAME }}/${{ github.event.inputs.BUILD_TARGET }}.img
+          workspace/out/target/product/${{ github.event.inputs.DEVICE_NAME }}/*.zip
+          workspace/out/target/product/${{ github.event.inputs.DEVICE_NAME }}/*vendor*.img
+        name: ${{ github.event.inputs.DEVICE_NAME }}-${{ github.run_id }}
+        tag_name: ${{ github.run_id }}
+        body: |
+          Manifest: ${{ github.event.inputs.MANIFEST_BRANCH }}
+          Device: ${{ github.event.inputs.DEVICE_NAME }}
+          Target: ${{ github.event.inputs.BUILD_TARGET }}.img
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
