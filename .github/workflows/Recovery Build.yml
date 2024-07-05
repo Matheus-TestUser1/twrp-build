@@ -100,12 +100,6 @@ jobs:
         git clone https://gitlab.com/OrangeFox/misc/scripts
         cd scripts
         sudo bash setup/android_build_env.sh
-        wget https://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.16.tar.gz
-        tar -xzf libiconv-1.16.tar.gz
-        cd libiconv-1.16
-        ./configure
-         make
-        sudo make install
         cd ~
     - name: Initialize repo
       run: |
@@ -143,7 +137,7 @@ jobs:
     - name: Set Swap Space
       uses: pierotofy/set-swap-space@master
       with:
-        swap-size-gb: 12
+        swap-size-gb: 8
 
     - name: Building recovery
       run: |
