@@ -151,6 +151,7 @@ jobs:
       with:
         files: |
           workspace/out/target/product/a13/recovery.img
+          workspace/out/target/product/a13/ramdisk.img
         name: ${{ github.event.inputs.DEVICE_NAME }}-${{ github.run_id }}
         tag_name: ${{ github.run_id }}
         body: |
