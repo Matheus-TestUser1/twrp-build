@@ -150,8 +150,7 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          workspace/out/target/product/a13/recovery.img
-          workspace/out/target/product/a13/ramdisk.img
+          workspace/out/target/product/a14x/recovery.img
         name: ${{ github.event.inputs.DEVICE_NAME }}-${{ github.run_id }}
         tag_name: ${{ github.run_id }}
         body: |
