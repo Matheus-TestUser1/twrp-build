@@ -119,7 +119,7 @@ jobs:
       run: |
         echo '<?xml version="1.0" encoding="UTF-8"?>' > .repo/local_manifests/device.xml
         echo '<manifest>' >> .repo/local_manifests/device.xml
-        echo '  <project name="Matheus-TestUser1/android_device_samsung_a14x" path="device/samsung/a14x" remote="github" revision="twrp-12.1"/>' >> .repo/local_manifests/device.xml
+        echo '  <project name="Matheus-TestUser1/android_device_samsung_a14x" path="device/samsung/a14x" remote="github" revision="android.12.1"/>' >> .repo/local_manifests/device.xml
         echo '</manifest>' >> .repo/local_manifests/device.xml
       working-directory: ${{ steps.pwd.outputs.workspace-folder }}
 
