@@ -22,7 +22,7 @@ on:
       DEVICE_PATH:
         description: 'Caminho do device tree'
         required: true
-        default: 'device/samsung/a14X'
+        default: 'device/samsung/a14x'
       COMMON_TREE_URL:
         description: 'URL do common tree (se não houver, deixe em branco)'
         required: false
@@ -32,11 +32,11 @@ on:
       DEVICE_NAME:
         description: 'Nome do dispositivo'
         required: true
-        default: 'a14X'
+        default: 'a14x'
       MAKEFILE_NAME:
         description: 'Nome do makefile'
         required: true
-        default: 'twrp_a14X'
+        default: 'twrp_a14x'
       BUILD_TARGET:
         description: 'Target de build'
         required: true
