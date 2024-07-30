@@ -14,15 +14,15 @@ on:
       DEVICE_TREE_URL:
         description: 'URL do device tree'
         required: true
-        default: 'https://github.com/Matheus-TestUser1/android_device_samsung_a135m'
+        default: 'https://github.com/Matheus-TestUser1/android_device_samsung_a14x'
       DEVICE_TREE_BRANCH:
         description: 'Branch do device tree'
         required: true
-        default: 'twrp-12.1'
+        default: 'android-12.1'
       DEVICE_PATH:
         description: 'Caminho do device tree'
         required: true
-        default: 'device/samsung/a13'
+        default: 'device/samsung/a14X'
       COMMON_TREE_URL:
         description: 'URL do common tree (se não houver, deixe em branco)'
         required: false
@@ -32,11 +32,11 @@ on:
       DEVICE_NAME:
         description: 'Nome do dispositivo'
         required: true
-        default: 'a13'
+        default: 'a14X'
       MAKEFILE_NAME:
         description: 'Nome do makefile'
         required: true
-        default: 'twrp_a13'
+        default: 'twrp_a14X'
       BUILD_TARGET:
         description: 'Target de build'
         required: true
