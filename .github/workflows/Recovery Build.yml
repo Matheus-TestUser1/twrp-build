@@ -119,7 +119,7 @@ jobs:
       run: |
        echo '<?xml version="1.0" encoding="UTF-8"?>' > .repo/local_manifests/device.xml
        echo '<manifest>' >> .repo/local_manifests/device.xml
-       echo '  <project name="Matheus-TestUser1/android_device_samsung_a135m" path="device/samsung/a13" remote="github" revision="twrp-12.1"/>' >> .repo/local_manifests/device.xml
+       echo '  <project name="Matheus-TestUser1/android_device_samsung_a1" path="device/samsung/a14x" remote="github" revision="twrp-12.1"/>' >> .repo/local_manifests/device.xml
        echo '</manifest>' >> .repo/local_manifests/device.xml
       working-directory: ${{ steps.pwd.outputs.workspace-folder }}
 
@@ -150,7 +150,7 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          workspace/out/target/product/a13/recovery.img
+          workspace/out/target/product/a14x/recovery.img
         name: ${{ github.event.inputs.DEVICE_NAME }}-${{ github.run_id }}
         tag_name: ${{ github.run_id }}
         body: |
