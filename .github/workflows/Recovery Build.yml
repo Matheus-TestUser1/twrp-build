@@ -24,17 +24,17 @@ on:
         required: true
         default: 'device/samsung/a13'
       COMMON_TREE_URL:
-        description: 'URL do common tree (se não houver, deixe em branco)'
+        description: 'URL do common tree (opcional)'
         required: false
       COMMON_PATH:
-        description: 'Caminho do common tree (se não houver, deixe em branco)'
+        description: 'Caminho do common tree (opcional)'
         required: false
       DEVICE_NAME:
-        description: 'Nome do dispositivo'
+        description: 'Nome do dispositivo (Product Name)'
         required: true
         default: 'a13'
       MAKEFILE_NAME:
-        description: 'Nome do makefile'
+        description: 'Nome do makefile (ex: twrp_a13)'
         required: true
         default: 'twrp_a13'
       BUILD_TARGET:
@@ -53,16 +53,13 @@ jobs:
       run: |
         echo "::group::User Environment Variables"
         echo "Manifest URL: ${{ github.event.inputs.MANIFEST_URL }}"
-        echo "Manifest Branch: ${{ github.event.inputs.MANIFEST_BRANCH }}"
         echo "Device Tree URL: ${{ github.event.inputs.DEVICE_TREE_URL }}"
-        echo "Device Tree Branch: ${{ github.event.inputs.DEVICE_TREE_BRANCH }}"
-        echo "Device Path: ${{ github.event.inputs.DEVICE_PATH }}"
         echo "Device Name: ${{ github.event.inputs.DEVICE_NAME }}"
-        echo "Makefile Name: ${{ github.event.inputs.MAKEFILE_NAME }}"
         echo "Build Target: ${{ github.event.inputs.BUILD_TARGET }}.img"
         echo "::endgroup::"
+
     - name: Check Out
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Cleanup
       uses: rokibhasansagar/slimhub_actions@main
@@ -71,67 +68,30 @@ jobs:
       run: |
        sudo apt update
        sudo apt -y upgrade
-       sudo apt -y install \
-       gperf \
-       gcc-multilib \
-       gcc-10-multilib \
-       g++-multilib \
-       build-essential \
-       clang \
-       g++-10-multilib \
-       libc6-dev \
-       lib32ncurses6 \
-       libncurses-dev \
-       libncurses6 \
-       xorg-dev \
-       libx11-dev \
-       tree \
-       lib32z-dev \
-       libgl1-mesa-dev \
-       libxml2-utils \
-       xsltproc \
-       bc \
-       ccache \
-       liblz4-tool \
-       libsdl2-dev \
-       libwxgtk3.2-dev \
-       libxml2 \
-       lzop \
-       pngcrush \
-       schedtool \
-       squashfs-tools \
-       imagemagick \
-       libbz2-dev \
-       xz-utils \
-       ncftp \
-       qemu-user-static \
-       libstdc++-10-dev \
-       e2fsprogs \
-       python3 \
-       android-sdk-platform-tools \
-       android-sdk-build-tools
+       sudo apt -y install gperf gcc-multilib gcc-10-multilib g++-multilib build-essential clang g++-10-multilib libc6-dev lib32ncurses6 libncurses-dev libncurses6 xorg-dev libx11-dev tree lib32z-dev libgl1-mesa-dev libxml2-utils xsltproc bc ccache liblz4-tool libsdl2-dev libwxgtk3.2-dev libxml2 lzop pngcrush schedtool squashfs-tools imagemagick libbz2-dev xz-utils ncftp qemu-user-static libstdc++-10-dev e2fsprogs python3 android-sdk-platform-tools android-sdk-build-tools git aria2
       
     - name: Set up JDK 17
-      uses: actions/setup-java@v2
+      uses: actions/setup-java@v4
       with:
-        distribution: 'adopt' # Options are: 'adopt', 'zulu', 'liberica', 'microsoft', 'temurin'
+        distribution: 'temurin'
         java-version: '17'
 
     - name: Setup SSH Keys
       if: ${{ startsWith(github.event.inputs.MANIFEST_URL, 'git@github.com') || 
-          startsWith(github.event.inputs.DEVICE_TREE_URL, 'git@github.com') ||
-          startsWith(github.event.inputs.COMMON_TREE_URL, 'git@github.com') }}
-      uses: webfactory/ssh-agent@v0.5.4
+          startsWith(github.event.inputs.DEVICE_TREE_URL, 'git@github.com') }}
+      uses: webfactory/ssh-agent@v0.9.0
       with:
         ssh-private-key: |
           ${{ secrets.SSH_PRIVATE_KEY }}
+
     - name: Install repo
       run: |
         mkdir ~/bin
         curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
         chmod a+x ~/bin/repo
         sudo ln -sf ~/bin/repo /usr/bin/repo
-    - name: Clone and setup OrangeFox scripts
+
+       name: Clone and setup OrangeFox scripts
       run: |
         cd ~
         sudo apt install git aria2 -y
@@ -139,13 +99,14 @@ jobs:
         cd scripts
         sudo bash setup/android_build_env.sh
         cd ~
+        
     - name: Initialize repo
       run: |
         mkdir workspace
         cd workspace
         echo "workspace-folder=$(pwd)" >> $GITHUB_OUTPUT
-        git config --global user.name "Nico170420"
-        git config --global user.email "b170420nc@gmail.com"
+        git config --global user.name "GitHub Action"
+        git config --global user.email "action@github.com"
         repo init --depth=1 -u ${{ github.event.inputs.MANIFEST_URL }} -b ${{ github.event.inputs.MANIFEST_BRANCH }}
       id: pwd
 
@@ -154,17 +115,25 @@ jobs:
       working-directory: ${{ steps.pwd.outputs.workspace-folder }}
       
     - name: Add device tree to local_manifests
+      # AQUI ESTA A MAGIA: Extrai o usuario/repo da URL e monta o XML dinamicamente
       run: |
+       # Remove o https://github.com/ da URL para pegar usuario/repo
+       REPO_NAME=$(echo "${{ github.event.inputs.DEVICE_TREE_URL }}" | sed 's|https://github.com/||' | sed 's|.git||')
+       
        echo '<?xml version="1.0" encoding="UTF-8"?>' > .repo/local_manifests/device.xml
        echo '<manifest>' >> .repo/local_manifests/device.xml
-       echo '  <project name="Matheus-TestUser1/twrpdt-manaus-U1TM34.107_34_3" path="device/motorola/edge40neo" remote="github" revision="main"/>' >> .repo/local_manifests/device.xml
+       echo '  <project name="'"$REPO_NAME"'" path="'"${{ github.event.inputs.DEVICE_PATH }}"'" remote="github" revision="'"${{ github.event.inputs.DEVICE_TREE_BRANCH }}"'"/>' >> .repo/local_manifests/device.xml
        echo '</manifest>' >> .repo/local_manifests/device.xml
+       
+       echo "::group::Generated Manifest"
+       cat .repo/local_manifests/device.xml
+       echo "::endgroup::"
       working-directory: ${{ steps.pwd.outputs.workspace-folder }}
 
     - name: Repo Sync
       run: |
         repo sync -j$(nproc --all) --force-sync
-      working-directory: workspace
+      working-directory: ${{ steps.pwd.outputs.workspace-folder }}
 
     - name: Clone common tree
       if: ${{ github.event.inputs.COMMON_TREE_URL != '' && github.event.inputs.COMMON_PATH != '' }}
@@ -185,15 +154,16 @@ jobs:
       working-directory: ${{ steps.pwd.outputs.workspace-folder }}
 
     - name: Upload to Release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         files: |
-          workspace/out/target/product/edge40neo/recovery.img
+          workspace/out/target/product/${{ github.event.inputs.DEVICE_NAME }}/*.img
+          workspace/out/target/product/${{ github.event.inputs.DEVICE_NAME }}/*.zip
         name: ${{ github.event.inputs.DEVICE_NAME }}-${{ github.run_id }}
         tag_name: ${{ github.run_id }}
         body: |
-        Manifest: ${{ github.event.inputs.MANIFEST_BRANCH }}
-        Device: ${{ github.event.inputs.DEVICE_NAME }}
-        Target: ${{ github.event.inputs.BUILD_TARGET }}.img
+          Manifest: ${{ github.event.inputs.MANIFEST_BRANCH }}
+          Device: ${{ github.event.inputs.DEVICE_NAME }}
+          Target: ${{ github.event.inputs.BUILD_TARGET }}.img
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
