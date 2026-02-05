@@ -191,7 +191,8 @@ jobs:
           workspace/out/target/product/edge40neo/vendor_boot.img
           ls workspace/out/target/product/edge40neo/
           ls /home/runner/work/twrp-build/twrp-build/workspace/
-          ls 
+          ls -la device/motorola/edge40neo/
+          ls -la device/motorola/edge40neo/*.mk
         name: ${{ github.event.inputs.DEVICE_NAME }}-${{ github.run_id }}
         tag_name: ${{ github.run_id }}
         body: |
