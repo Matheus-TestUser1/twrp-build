@@ -18,11 +18,11 @@ on:
       DEVICE_TREE_BRANCH:
         description: 'Branch do device tree'
         required: true
-        default: 'twrp-12.1'
+        default: 'main'
       DEVICE_PATH:
         description: 'Caminho do device tree'
         required: true
-        default: 'device/samsung/a13'
+        default: 'device/motorola/edge40neo'
       COMMON_TREE_URL:
         description: 'URL do common tree (se não houver, deixe em branco)'
         required: false
@@ -32,15 +32,15 @@ on:
       DEVICE_NAME:
         description: 'Nome do dispositivo'
         required: true
-        default: 'a13'
+        default: 'edge40neo'
       MAKEFILE_NAME:
         description: 'Nome do makefile'
         required: true
-        default: 'twrp_a13'
+        default: 'twrp_edge40neo'
       BUILD_TARGET:
         description: 'Target de build'
         required: true
-        default: 'recoveryimage'
+        default: 'vendorbootimage'
 
 jobs:
   build:
@@ -188,7 +188,7 @@ jobs:
       with:
         files: |
           workspace/out/target/product/edge40neo/vendor_boot.img
-          ls  workspace/out/target/product/edge40neo
+
         name: ${{ github.event.inputs.DEVICE_NAME }}-${{ github.run_id }}
         tag_name: ${{ github.run_id }}
         body: |
