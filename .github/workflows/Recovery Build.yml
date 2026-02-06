@@ -183,16 +183,19 @@ jobs:
         export ALLOW_MISSING_DEPENDENCIES=true
         lunch ${{ github.event.inputs.MAKEFILE_NAME }}-eng && make clean && mka -j4 ${{ github.event.inputs.BUILD_TARGET }}
       working-directory: ${{ steps.pwd.outputs.workspace-folder }}
-
+    - name : ls test
+     run: |
+      ls workspace/out/target/product/edge40neo/
+          ls /home/runner/work/twrp-build/twrp-build/workspace/
+          ls /home/runner/work/twrp-build/twrp-build/workspace/out/
+          ls /home/runner/work/twrp-build/twrp-build/workspace/out/target/product/edge40neo
+          ls  device/motorola/edge40neo/
     - name: Upload to Release
       uses: softprops/action-gh-release@v1
       with:
         files: |
           workspace/out/target/product/edge40neo/vendor_boot.img
-          ls workspace/out/target/product/edge40neo/
-          ls /home/runner/work/twrp-build/twrp-build/workspace/
-          ls -la device/motorola/edge40neo/
-          ls -la device/motorola/edge40neo/*.mk
+         
         name: ${{ github.event.inputs.DEVICE_NAME }}-${{ github.run_id }}
         tag_name: ${{ github.run_id }}
         body: |
