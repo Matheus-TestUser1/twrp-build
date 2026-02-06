@@ -14,8 +14,7 @@ on:
       DEVICE_TREE_URL:
         description: 'URL do device tree'
         required: true
-        default: 'https://github.com/Matheus-TestUser1/twrpdt-manaus-U1TM34.107_
-34_3'
+        default: 'https://github.com/Matheus-TestUser1/twrpdt-manaus-U1TM34.107_34_3'
       DEVICE_TREE_BRANCH:
         description: 'Branch do device tree'
         required: true
@@ -180,6 +179,7 @@ jobs:
 
     - name: Building recovery
       run: |
+        set -euxo pipefail
         source build/envsetup.sh
         export ALLOW_MISSING_DEPENDENCIES=true
         lunch ${{ github.event.inputs.MAKEFILE_NAME }}-eng && make clean && mka -j2 ${{ github.event.inputs.BUILD_TARGET }}
