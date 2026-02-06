@@ -14,7 +14,8 @@ on:
       DEVICE_TREE_URL:
         description: 'URL do device tree'
         required: true
-        default: 'https://github.com/Matheus-TestUser1/android_device_samsung_a135m'
+        default: 'https://github.com/Matheus-TestUser1/twrpdt-manaus-U1TM34.107_
+34_3'
       DEVICE_TREE_BRANCH:
         description: 'Branch do device tree'
         required: true
