@@ -157,7 +157,7 @@ jobs:
       run: |
        echo '<?xml version="1.0" encoding="UTF-8"?>' > .repo/local_manifests/device.xml
        echo '<manifest>' >> .repo/local_manifests/device.xml
-       echo '  <project name="Matheus-TestUser1/twrpdt-manaus-U1TM34.107_34_3" path="device/motorola/edge40neo" remote="github" revision="main"/>' >> .repo/local_manifests/device.xml
+       echo '  <project name="Matheus-TestUser1/twrpdt-manaus-U1TM34.107_34_3" path="device/motorola/manaus" remote="github" revision="main"/>' >> .repo/local_manifests/device.xml
        echo '</manifest>' >> .repo/local_manifests/device.xml
       working-directory: ${{ steps.pwd.outputs.workspace-folder }}
 
