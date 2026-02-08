@@ -181,7 +181,7 @@ jobs:
       run: |
         source build/envsetup.sh
         export ALLOW_MISSING_DEPENDENCIES=true
-        lunch ${{ github.event.inputs.MAKEFILE_NAME }}-eng && make clean && mka -j2 ${{ github.event.inputs.BUILD_TARGET }}
+        lunch ${{ github.event.inputs.MAKEFILE_NAME }}-eng && make clean && mka -j4 ${{ github.event.inputs.BUILD_TARGET }}
       working-directory: ${{ steps.pwd.outputs.workspace-folder }}
     - name: Upload to Release
       uses: softprops/action-gh-release@v1
