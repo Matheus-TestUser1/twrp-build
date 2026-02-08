@@ -22,7 +22,7 @@ on:
       DEVICE_PATH:
         description: 'Caminho do device tree'
         required: true
-        default: 'device/motorola/edge40neo'
+        default: 'device/motorola/manaus'
       COMMON_TREE_URL:
         description: 'URL do common tree (se não houver, deixe em branco)'
         required: false
@@ -32,11 +32,11 @@ on:
       DEVICE_NAME:
         description: 'Nome do dispositivo'
         required: true
-        default: 'edge40neo'
+        default: 'manaus'
       MAKEFILE_NAME:
         description: 'Nome do makefile'
         required: true
-        default: 'twrp_edge40neo'
+        default: 'twrp_manaus'
       BUILD_TARGET:
         description: 'Target de build'
         required: true
@@ -179,7 +179,6 @@ jobs:
 
     - name: Building recovery
       run: |
-        set -euxo pipefail
         source build/envsetup.sh
         export ALLOW_MISSING_DEPENDENCIES=true
         lunch ${{ github.event.inputs.MAKEFILE_NAME }}-eng && make clean && mka -j2 ${{ github.event.inputs.BUILD_TARGET }}
@@ -188,7 +187,7 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          workspace/out/target/product/edge40neo/vendor_boot.img
+          workspace/out/target/product/manaus/vendor_boot.img
 
         name: ${{ github.event.inputs.DEVICE_NAME }}-${{ github.run_id }}
         tag_name: ${{ github.run_id }}
