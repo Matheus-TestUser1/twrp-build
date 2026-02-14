@@ -285,60 +285,18 @@ jobs:
           echo "::endgroup::"
         fi
       working-directory: ${{ steps.pwd.outputs.workspace-folder }}
-
-    - name: Find output files
-      id: find-outputs
-      run: |
-        DEVICE_NAME="${{ github.event.inputs.DEVICE_NAME }}"
-        OUT_DIR="${{ steps.pwd.outputs.workspace-folder }}/out/target/product/${DEVICE_NAME}"
-        
-        # Encontra todos os arquivos de imagem gerados
-        FILES=$(find ${OUT_DIR} -name "*.img" -type f 2>/dev/null | tr '\n' '|')
-        echo "files=${FILES}" >> $GITHUB_OUTPUT
-        
-        # Lista os arquivos encontrados
-        echo "::group::Arquivos de saída encontrados"
-        ls -lah ${OUT_DIR}/*.img 2>/dev/null || echo "Nenhum .img encontrado em ${OUT_DIR}"
-        echo "::endgroup::"
-        
-        # Verifica se o arquivo principal existe
-        MAIN_FILE="${OUT_DIR}/${{ github.event.inputs.BUILD_TARGET }}.img"
-        if [ -f "$MAIN_FILE" ]; then
-          echo "main_file=${MAIN_FILE}" >> $GITHUB_OUTPUT
-          echo "main_file_exists=true" >> $GITHUB_OUTPUT
-        else
-          echo "main_file_exists=false" >> $GITHUB_OUTPUT
-        fi
-
     - name: Upload to Release
-      if: ${{ steps.find-outputs.outputs.main_file_exists == 'true' }}
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          ${{ steps.pwd.outputs.workspace-folder }}/out/target/product/${{ github.event.inputs.DEVICE_NAME }}/*.img
-        name: ${{ github.event.inputs.DEVICE_NAME }}-${{ github.event.inputs.BUILD_TARGET }}-${{ github.run_id }}
-        tag_name: ${{ github.event.inputs.DEVICE_NAME }}-${{ github.run_id }}
+          workspace/out/target/product/manaus/vendor_boot.img
+
+        name: ${{ github.event.inputs.DEVICE_NAME }}-${{ github.run_id }}
+        tag_name: ${{ github.run_id }}
         body: |
-          **Build Automático de Recovery**
-          
-          | Parâmetro | Valor |
-          |-----------|-------|
-          | Device | `${{ github.event.inputs.DEVICE_NAME }}` |
-          | Manifest | `${{ github.event.inputs.MANIFEST_BRANCH }}` |
-          | Target | `${{ github.event.inputs.BUILD_TARGET }}.img` |
-          | Device Tree | `${{ github.event.inputs.DEVICE_TREE_URL }}` |
-          | Branch | `${{ github.event.inputs.DEVICE_TREE_BRANCH }}` |
-          | CCACHE | `${{ github.event.inputs.USE_CCACHE }}` |
-          | Clean Build | `${{ github.event.inputs.CLEAN_BUILD }}` |
-          
-          **Arquivos incluídos:**
-          `${{ steps.find-outputs.outputs.files }}`
-          
-          **Checksums:**
-          Veja os arquivos de checksum na seção de assets.
-          
-          ---
-          *Build gerado automaticamente via GitHub Actions*
+        Manifest: ${{ github.event.inputs.MANIFEST_BRANCH }}
+        Device: ${{ github.event.inputs.DEVICE_NAME }}
+        Target: ${{ github.event.inputs.BUILD_TARGET }}.img
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
