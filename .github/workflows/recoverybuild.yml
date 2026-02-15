@@ -290,7 +290,6 @@ jobs:
       with:
         files: |
           workspace/out/target/product/manaus/vendor_boot.img
-          workspace/out/target/product/manaus/ramdisk.img
           workspace/out/target/product/manaus/boot.img
         name: ${{ github.event.inputs.DEVICE_NAME }}-${{ github.run_id }}
         tag_name: ${{ github.run_id }}
