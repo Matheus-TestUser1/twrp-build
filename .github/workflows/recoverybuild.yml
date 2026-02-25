@@ -101,47 +101,47 @@ jobs:
 
     - name: Prepare the environment
       run: |
-       sudo apt update
-       sudo apt -y upgrade
-       sudo apt -y install \
-       gperf \
-       gcc-multilib \
-       gcc-10-multilib \
-       g++-multilib \
-       build-essential \
-       clang \
-       g++-10-multilib \
-       libc6-dev \
-       lib32ncurses6 \
-       libncurses-dev \
-       libncurses6 \
-       xorg-dev \
-       libx11-dev \
-       tree \
-       lib32z-dev \
-       libgl1-mesa-dev \
-       libxml2-utils \
-       xsltproc \
-       bc \
-       ccache \
-       liblz4-tool \
-       libsdl2-dev \
-       libwxgtk3.2-dev \
-       libxml2 \
-       lzop \
-       pngcrush \
-       schedtool \
-       squashfs-tools \
-       imagemagick \
-       libbz2-dev \
-       xz-utils \
-       ncftp \
-       qemu-user-static \
-       libstdc++-10-dev \
-       e2fsprogs \
-       python3 \
-       android-sdk-platform-tools \
-       android-sdk-build-tools
+        sudo apt update
+        sudo apt -y upgrade
+        sudo apt -y install \
+          gperf \
+          gcc-multilib \
+          gcc-10-multilib \
+          g++-multilib \
+          build-essential \
+          clang \
+          g++-10-multilib \
+          libc6-dev \
+          lib32ncurses6 \
+          libncurses-dev \
+          libncurses6 \
+          xorg-dev \
+          libx11-dev \
+          tree \
+          lib32z-dev \
+          libgl1-mesa-dev \
+          libxml2-utils \
+          xsltproc \
+          bc \
+          ccache \
+          liblz4-tool \
+          libsdl2-dev \
+          libwxgtk3.2-dev \
+          libxml2 \
+          lzop \
+          pngcrush \
+          schedtool \
+          squashfs-tools \
+          imagemagick \
+          libbz2-dev \
+          xz-utils \
+          ncftp \
+          qemu-user-static \
+          libstdc++-10-dev \
+          e2fsprogs \
+          python3 \
+          android-sdk-platform-tools \
+          android-sdk-build-tools
 
     - name: Set up JDK 17
       uses: actions/setup-java@v4
@@ -161,7 +161,7 @@ jobs:
     - name: Install repo
       run: |
         mkdir ~/bin
-        curl https://storage.googleapis.com/git-repo-downloads/repo  > ~/bin/repo
+        curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
         chmod a+x ~/bin/repo
         sudo ln -sf ~/bin/repo /usr/bin/repo
 
@@ -169,12 +169,13 @@ jobs:
       run: |
         cd ~
         sudo apt install git aria2 -y
-        git clone https://gitlab.com/Matheus-TestUser1/scripts 
+        git clone https://gitlab.com/Matheus-TestUser1/scripts
         cd scripts
         sudo bash setup/android_build_env.sh
         cd ~
 
     - name: Initialize repo
+      id: pwd
       run: |
         mkdir workspace
         cd workspace
@@ -182,66 +183,63 @@ jobs:
         git config --global user.name "Nico170420"
         git config --global user.email "b170420nc@gmail.com"
         repo init --depth=1 -u ${{ github.event.inputs.MANIFEST_URL }} -b ${{ github.event.inputs.MANIFEST_BRANCH }}
-      id: pwd
 
     - name: Create local_manifests directory
       run: mkdir -p .repo/local_manifests
       working-directory: ${{ steps.pwd.outputs.workspace-folder }}
-      
+
     - name: Add device tree to local_manifests
       run: |
-       # Extrai o nome do repositório e remote automaticamente da URL
-       DEVICE_URL="${{ github.event.inputs.DEVICE_TREE_URL }}"
-       DEVICE_BRANCH="${{ github.event.inputs.DEVICE_TREE_BRANCH }}"
-       DEVICE_PATH="${{ github.event.inputs.DEVICE_PATH }}"
-       
-       # Detecta se é GitHub ou outro remote
-       if [[ "$DEVICE_URL" == *"github.com"* ]]; then
-         REMOTE="github"
-         REPO_NAME=$(echo "$DEVICE_URL" | sed 's|https://github.com/||' | sed 's|.git$||')
-       elif [[ "$DEVICE_URL" == *"gitlab.com"* ]]; then
-         REMOTE="gitlab"
-         REPO_NAME=$(echo "$DEVICE_URL" | sed 's|https://gitlab.com/||' | sed 's|.git$||')
-       else
-         REMOTE="origin"
-         REPO_NAME=$(basename -s .git "$DEVICE_URL")
-       fi
-       
-       cat > .repo/local_manifests/device.xml << EOF
-       <?xml version="1.0" encoding="UTF-8"?>
-       <manifest>
-         <project name="${REPO_NAME}" path="${DEVICE_PATH}" remote="${REMOTE}" revision="${DEVICE_BRANCH}"/>
-       </manifest>
-       EOF
-       
-       echo "Generated device.xml:"
-       cat .repo/local_manifests/device.xml
+        DEVICE_URL="${{ github.event.inputs.DEVICE_TREE_URL }}"
+        DEVICE_BRANCH="${{ github.event.inputs.DEVICE_TREE_BRANCH }}"
+        DEVICE_PATH="${{ github.event.inputs.DEVICE_PATH }}"
+
+        if [[ "$DEVICE_URL" == *"github.com"* ]]; then
+          REMOTE="github"
+          REPO_NAME=$(echo "$DEVICE_URL" | sed 's|https://github.com/||' | sed 's|.git$||')
+        elif [[ "$DEVICE_URL" == *"gitlab.com"* ]]; then
+          REMOTE="gitlab"
+          REPO_NAME=$(echo "$DEVICE_URL" | sed 's|https://gitlab.com/||' | sed 's|.git$||')
+        else
+          REMOTE="origin"
+          REPO_NAME=$(basename -s .git "$DEVICE_URL")
+        fi
+
+        cat > .repo/local_manifests/device.xml << EOF
+        <?xml version="1.0" encoding="UTF-8"?>
+        <manifest>
+          <project name="${REPO_NAME}" path="${DEVICE_PATH}" remote="${REMOTE}" revision="${DEVICE_BRANCH}"/>
+        </manifest>
+        EOF
+
+        echo "Generated device.xml:"
+        cat .repo/local_manifests/device.xml
       working-directory: ${{ steps.pwd.outputs.workspace-folder }}
 
     - name: Add common tree to local_manifests
       if: ${{ github.event.inputs.COMMON_TREE_URL != '' && github.event.inputs.COMMON_PATH != '' }}
       run: |
-       COMMON_URL="${{ github.event.inputs.COMMON_TREE_URL }}"
-       COMMON_BRANCH="${{ github.event.inputs.DEVICE_TREE_BRANCH }}"
-       COMMON_PATH="${{ github.event.inputs.COMMON_PATH }}"
-       
-       if [[ "$COMMON_URL" == *"github.com"* ]]; then
-         REMOTE="github"
-         REPO_NAME=$(echo "$COMMON_URL" | sed 's|https://github.com/||' | sed 's|.git$||')
-       elif [[ "$COMMON_URL" == *"gitlab.com"* ]]; then
-         REMOTE="gitlab"
-         REPO_NAME=$(echo "$COMMON_URL" | sed 's|https://gitlab.com/||' | sed 's|.git$||')
-       else
-         REMOTE="origin"
-         REPO_NAME=$(basename -s .git "$COMMON_URL")
-       fi
-       
-       cat > .repo/local_manifests/common.xml << EOF
-       <?xml version="1.0" encoding="UTF-8"?>
-       <manifest>
-         <project name="${REPO_NAME}" path="${COMMON_PATH}" remote="${REMOTE}" revision="${COMMON_BRANCH}"/>
-       </manifest>
-       EOF
+        COMMON_URL="${{ github.event.inputs.COMMON_TREE_URL }}"
+        COMMON_BRANCH="${{ github.event.inputs.DEVICE_TREE_BRANCH }}"
+        COMMON_PATH="${{ github.event.inputs.COMMON_PATH }}"
+
+        if [[ "$COMMON_URL" == *"github.com"* ]]; then
+          REMOTE="github"
+          REPO_NAME=$(echo "$COMMON_URL" | sed 's|https://github.com/||' | sed 's|.git$||')
+        elif [[ "$COMMON_URL" == *"gitlab.com"* ]]; then
+          REMOTE="gitlab"
+          REPO_NAME=$(echo "$COMMON_URL" | sed 's|https://gitlab.com/||' | sed 's|.git$||')
+        else
+          REMOTE="origin"
+          REPO_NAME=$(basename -s .git "$COMMON_URL")
+        fi
+
+        cat > .repo/local_manifests/common.xml << EOF
+        <?xml version="1.0" encoding="UTF-8"?>
+        <manifest>
+          <project name="${REPO_NAME}" path="${COMMON_PATH}" remote="${REMOTE}" revision="${COMMON_BRANCH}"/>
+        </manifest>
+        EOF
       working-directory: ${{ steps.pwd.outputs.workspace-folder }}
 
     - name: Repo Sync
@@ -257,8 +255,7 @@ jobs:
     - name: Building recovery
       run: |
         source build/envsetup.sh
-        
-        # Configura ccache se habilitado
+
         if [ "${{ github.event.inputs.USE_CCACHE }}" == "true" ]; then
           export USE_CCACHE=1
           export CCACHE_EXEC=/usr/bin/ccache
@@ -268,59 +265,68 @@ jobs:
           ccache -s
           echo "::endgroup::"
         fi
-        
+
         export ALLOW_MISSING_DEPENDENCIES=true
-        
-        # Determina se faz clean build
+
         if [ "${{ github.event.inputs.CLEAN_BUILD }}" == "true" ]; then
           echo "Executando clean build..."
           lunch ${{ github.event.inputs.MAKEFILE_NAME }}-eng && make clean
         fi
-        
+
         lunch ${{ github.event.inputs.MAKEFILE_NAME }}-eng && mka -j$(nproc --all) ${{ github.event.inputs.BUILD_TARGET }}
-        
+
         if [ "${{ github.event.inputs.USE_CCACHE }}" == "true" ]; then
           echo "::group::CCache Stats (depois)"
           ccache -s
           echo "::endgroup::"
         fi
       working-directory: ${{ steps.pwd.outputs.workspace-folder }}
-    - name: Upload to Release
-      uses: softprops/action-gh-release@v1
-      with:
-        files: |
-          workspace/out/target/product/manaus/vendor_boot.img
-          workspace/out/target/product/manaus/boot.img
-        name: ${{ github.event.inputs.DEVICE_NAME }}-${{ github.run_id }}
-        tag_name: ${{ github.run_id }}
-        body: |
-        Manifest: ${{ github.event.inputs.MANIFEST_BRANCH }}
-        Device: ${{ github.event.inputs.DEVICE_NAME }}
-        Target: ${{ github.event.inputs.BUILD_TARGET }}.img
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    # ✅ NOVO: step que verifica quais arquivos existem e seta output
+    - name: Find output files
+      id: find-outputs
+      run: |
+        OUT_DIR="${{ steps.pwd.outputs.workspace-folder }}/out/target/product/${{ github.event.inputs.DEVICE_NAME }}"
+        echo "Listando arquivos em $OUT_DIR:"
+        ls -lh "$OUT_DIR"/*.img 2>/dev/null || echo "Nenhum .img encontrado"
+
+        if ls "$OUT_DIR"/*.img 1>/dev/null 2>&1; then
+          echo "main_file_exists=true" >> $GITHUB_OUTPUT
+        else
+          echo "main_file_exists=false" >> $GITHUB_OUTPUT
+          echo "::error::Nenhum arquivo .img encontrado! O build pode ter falhado silenciosamente."
+          exit 1
+        fi
 
     - name: Generate Checksums
       if: ${{ steps.find-outputs.outputs.main_file_exists == 'true' }}
       run: |
-        cd ${{ steps.pwd.outputs.workspace-folder }}/out/target/product/${{ github.event.inputs.DEVICE_NAME }}
+        OUT_DIR="${{ steps.pwd.outputs.workspace-folder }}/out/target/product/${{ github.event.inputs.DEVICE_NAME }}"
+        cd "$OUT_DIR"
         for file in *.img; do
           if [ -f "$file" ]; then
             md5sum "$file" > "$file.md5"
             sha256sum "$file" > "$file.sha256"
+            echo "Checksum gerado para: $file"
           fi
         done
 
-    - name: Upload Checksums to Release
+    # ✅ CORRIGIDO: um único step de upload com body correto e paths dinâmicos
+    - name: Upload to Release
       if: ${{ steps.find-outputs.outputs.main_file_exists == 'true' }}
       uses: softprops/action-gh-release@v1
       with:
         files: |
+          ${{ steps.pwd.outputs.workspace-folder }}/out/target/product/${{ github.event.inputs.DEVICE_NAME }}/*.img
           ${{ steps.pwd.outputs.workspace-folder }}/out/target/product/${{ github.event.inputs.DEVICE_NAME }}/*.md5
           ${{ steps.pwd.outputs.workspace-folder }}/out/target/product/${{ github.event.inputs.DEVICE_NAME }}/*.sha256
         name: ${{ github.event.inputs.DEVICE_NAME }}-${{ github.event.inputs.BUILD_TARGET }}-${{ github.run_id }}
         tag_name: ${{ github.event.inputs.DEVICE_NAME }}-${{ github.run_id }}
-        append_body: true
+        body: |
+          **Manifest:** ${{ github.event.inputs.MANIFEST_BRANCH }}
+          **Device:** ${{ github.event.inputs.DEVICE_NAME }}
+          **Target:** ${{ github.event.inputs.BUILD_TARGET }}.img
+          **Build ID:** ${{ github.run_id }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
